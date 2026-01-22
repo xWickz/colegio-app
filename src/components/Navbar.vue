@@ -10,5 +10,10 @@
                 <RouterLink to="/alumnos">Alumnos</RouterLink>
             </button>
         </ul>
+        <ul>
+            <button>
+                <RouterLink to="/profesores">Profesores</RouterLink>
+            </button>
+        </ul>
     </nav>
 </template>

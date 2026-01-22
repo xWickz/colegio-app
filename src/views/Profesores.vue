@@ -10,18 +10,18 @@ const nombre = ref([])
 
 const fetchData = async() => {
   try {
-    const response = await axios.get('http://localhost:3000/api/data/estudiantes')
+    const response = await axios.get('http://localhost:3000/api/data/profesores')
     items.value = response.data
   } catch (error) {
     console.error(error)
   }
 }
 
-const addEstudiante = async () => {
+const addProfesor = async () => {
     if (!cedula.value || !nombre.value) return alert('Llena ambos campos')
 
     try {
-        await axios.post('http://localhost:3000/api/data', {
+        await axios.post('http://localhost:3000/api/data/profesores', {
             cedula: cedula.value,
             nombre: nombre.value
         });
@@ -40,9 +40,9 @@ const addEstudiante = async () => {
     }
 }
 
-const deleteStudent = async (id) => {
+const deleteProfesor = async (id) => {
   try {
-    await axios.delete(`http://localhost:3000/api/data/${id}`)
+    await axios.delete(`http://localhost:3000/api/data/profesores/${id}`)
     fetchData()
   } catch (error) {
     console.error(error)
@@ -58,22 +58,22 @@ onMounted(() => {
 
 <template>
     <main>
-      
         <div>
-          <h1>Estudiantes:</h1>
+          <h1>Profesores:</h1>
           <ul>
-            <li v-for="estudiante in items" :key="estudiante.id">
-              {{ estudiante.id }}: (V-{{ new Intl.NumberFormat('es-ES').format(estudiante.cedula) }}) {{ estudiante.nombre }}
-              <button @click="deleteStudent(estudiante.id)">Eliminar</button>
+            
+            <li v-for="profesor in items" :key="profesor.id">
+              {{ profesor.id }}: (V-{{ new Intl.NumberFormat('es-ES').format(profesor.cedula) }}) {{ profesor.nombre }}
+              <button @click="deleteStudent(profesor.id)">Eliminar</button>
             </li>
           </ul>
         </div>
       
         <div>
-          <h1>Agregar estudiante:</h1>
+          <h1>Agregar profesor:</h1>
           <input type="number" v-model="cedula" placeholder="Cedula"/>
           <input type="text" v-model="nombre" placeholder="Nombre"/>
-          <button @click="addEstudiante">Agregar</button>
+          <button @click="addProfesor">Agregar</button>
         </div>
     </main>
 </template>
