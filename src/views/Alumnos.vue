@@ -1,4 +1,6 @@
 <script setup>
+import Navbar from '../components/Navbar.vue'
+
 import axios from 'axios'
 import { ref, onMounted } from 'vue'
 
@@ -57,18 +59,53 @@ onMounted(() => {
 </script>
 
 <template>
-    <main>
+
+    <Navbar/>
+    <main class="bg-gray-800 min-h-screen p-10 text-white"> 
       
-        <div>
+        <div class="mt-20">
           <h1>Estudiantes:</h1>
-          <ul>
-            <li v-for="estudiante in items" :key="estudiante.id">
-              {{ estudiante.id }}: (V-{{ new Intl.NumberFormat('es-ES').format(estudiante.cedula) }}) {{ estudiante.nombre }}
-              <button @click="deleteStudent(estudiante.id)">Eliminar</button>
-            </li>
-          </ul>
+
+          <div class="relative overflow-x-auto bg-neutral-primary-soft shadow-xs rounded-base border border-default">
+          <table class="w-full text-sm text-left rtl:text-right text-body">
+            <thead class="text-sm text-body bg-neutral-secondary-soft border-b rounded-base border-default">
+              <tr>
+                <th scope="col" class="px-6 py-3 font-medium">Cedula</th>
+                <th scope="col" class="px-6 py-3 font-medium">Nombre</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="estudiante in items" :key="estudiante.id" class="bg-neutral-primary border-b border-default">
+                <th>V-{{ new Intl.NumberFormat('es-ES').format(estudiante.cedula) }}</th>
+                <td>{{ estudiante.nombre }}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-      
+      </div>
+      <table class="table-auto w-full border-collapse">
+  <thead>
+    <tr class="bg-gray-900">
+      <th class="px-4 py-2 text-left">Name</th>
+      <th class="px-4 py-2 text-left">Job</th>
+      <th class="px-4 py-2 text-left">Employed</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class="hover:bg-gray-700">
+      <td class="border px-4 py-2">John Michael</td>
+      <td class="border px-4 py-2">Manager</td>
+      <td class="border px-4 py-2">23/04/18</td>
+    </tr>
+    <tr class="hover:bg-gray-700">
+      <td class="border px-4 py-2">Alexa Liras</td>
+      <td class="border px-4 py-2">Developer</td>
+      <td class="border px-4 py-2">23/04/18</td>
+    </tr>
+    <!-- Additional rows... -->
+  </tbody>
+</table>
+
         <div>
           <h1>Agregar estudiante:</h1>
           <input type="number" v-model="cedula" placeholder="Cedula"/>

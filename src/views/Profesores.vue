@@ -1,4 +1,5 @@
 <script setup>
+import Navbar from '../components/Navbar.vue'
 import axios from 'axios'
 import { ref, onMounted } from 'vue'
 
@@ -57,8 +58,9 @@ onMounted(() => {
 </script>
 
 <template>
-    <main>
-        <div>
+    <Navbar/>
+    <main class="bg-gray-800 min-h-screen p-10 text-white">
+        <div class="mt-10">
           <h1>Profesores:</h1>
           <ul>
             

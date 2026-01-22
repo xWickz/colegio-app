@@ -1,18 +1,12 @@
-<template>
-holas
-</template>
+<script setup>
+import Navbar from '../components/Navbar.vue'
+</script>
 
-<style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
-}
-</style>
+<template>
+  <Navbar/>
+  <main class="bg-gray-800 min-h-screen p-10 text-white">
+    <h1 class="mt-20 font-bold text-2xl">
+      Hola!
+    </h1>
+  </main>
+</template>
