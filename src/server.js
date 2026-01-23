@@ -3,7 +3,7 @@ import mysql from "mysql";
 import cors from "cors";
 import { z } from "zod";
 
-import EstudianteSchema from "./schemas/estudiantes.js";
+import EstudianteSchema from "@/schemas/estudiantes.js";
 
 const app = express();
 
