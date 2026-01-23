@@ -3,7 +3,9 @@ import mysql from "mysql";
 import cors from "cors";
 import { z } from "zod";
 
-import EstudianteSchema from "@/schemas/estudiantes.js";
+import { DEFAULTS } from "./config.js";
+import EstudianteSchema from "./schemas/estudiantes.js";
+
 
 const app = express();
 
@@ -34,13 +36,16 @@ app.use(
 
 // Simple route to test server
 app.get("/", (req, res) => {
-  res.send("Hello World! ");
+  res.send("Hello World!");
 });
 
 // api endpoint to fetch data (GET)
 app.get("/api/data/estudiantes", (req, res) => {
 
-  const query = "SELECT * FROM estudiantes";
+  const limit = Number(req.query.limit) || DEFAULTS.DEFAULT_LIMIT;
+  const offset = Number(req.query.offset) || 0;
+
+  const query = `SELECT * FROM estudiantes LIMIT ${limit} OFFSET ${offset}`;
 
   connection.query(query, (err, results) => {
     if (err) {
@@ -65,6 +70,18 @@ app.get("/api/data/profesores", (req, res) => {
   });
 });
 
+app.get("/api/data/estudiantes/length", async (req, res) => {
+  const query = "SELECT COUNT(*) AS length FROM estudiantes";
+  connection.query(query, (err, results) => {
+    if (err) {
+      console.error("Error fetching data length:", err);
+      res.status(500).send("Error fetching data length");
+      return;
+    }
+    res.json(results[0]);
+  });
+});
+
 // api endpoint to add data (POST)
 
 // POST Estudiantes
@@ -76,13 +93,12 @@ app.post("/api/data/estudiantes", (req, res) => {
     const query = "INSERT INTO estudiantes (cedula, nombre) VALUES (?, ?)";
 
     connection.query(query, [cedula, nombre], (err, results) => {
-
       if (err) {
-        if (err.code === 'ER_DUP_ENTRY') {
+        if (err.code === "ER_DUP_ENTRY") {
           res.status(400).send("Cédula ya existe");
           return;
         }
-        
+
         console.error("Error inserting data:", err);
         res.status(500).send("Error inserting data");
         return;

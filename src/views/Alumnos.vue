@@ -4,13 +4,14 @@ import { fetchEstudiantes, addEstudianteService, deleteEstudiante } from '@/serv
 import { ref, onMounted } from 'vue'
 
 const items = ref([])
-
+const page = ref(1)
+const limit = ref(10)
 const cedula = ref([])
 const nombre = ref([])
 
 const fetchData = async () => {
     try {
-        items.value = await fetchEstudiantes()
+        items.value = await fetchEstudiantes(page.value, limit.value) // pagina, limites
     } catch (error) {
         console.error(error)
     }
@@ -43,7 +44,6 @@ const addEstudiante = async () => {
 
 const deleteStudent = async (id) => {
     try {
-
         await deleteEstudiante(id)
         fetchData()
     } catch (error) {
@@ -62,8 +62,11 @@ onMounted(() => {
 
     <sideNavbar />
 
-    <main class="bg-gray-100 min-h-screen p-10 ml-60">
+    <main class="bg-gray-100 min-h-screen px-20 py-10 ml-60 mx-auto">
 
+        <h1 class="text-4xl font-black mb-2">
+            Estudiantes
+        </h1>
         <div id="toast-success" class="fixed top-5 right-5 z-50 flex items-center w-full max-w-xs p-4 mb-4 text-green-500 bg-white rounded-lg shadow hidden" role="alert">
         <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-green-500 bg-green-100 rounded-lg">
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 00-1.414 0L9 11.586 6.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l7-7a1 1 0 000-1.414z" clip-rule="evenodd"></path></svg>
@@ -132,6 +135,17 @@ onMounted(() => {
             </div>
         </div>
 
+        <div class="mb-4 flex items-center gap-2">
+        <label for="limit" class="font-medium">Registros por página:</label>
+        <select id="limit" v-model="limit" @change="fetchData" class="px-2 py-1 rounded">
+            <option :value="1">1</option>
+            <option :value="5">5</option>
+            <option :value="10">10</option>
+            <option :value="20">20</option>
+            <option :value="50">50</option>
+        </select>
+        </div>
+
         <div class="relative overflow-x-auto bg-neutral-primary-soft shadow-xs rounded-base border border-default">
             <table class="w-full text-sm text-left rtl:text-right text-body">
                 <thead class="text-sm text-body bg-neutral-secondary-soft border-b rounded-base border-default">
@@ -142,16 +156,22 @@ onMounted(() => {
                         <th scope="col" class="px-6 py-3 font-medium">
                             Nombre
                         </th>
+                        <th scope="col" class="px-6 py-3 font-medium">
+                            Acciones
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-for="estudiante in items" :key="estudiante.id"
-                        class="bg-neutral-primary border-b border-default">
+                        class="bg-neutral-primary border-b border-default hover:bg-neutral-secondary">
                         <th scope="row" class="px-6 py-4 font-medium text-heading whitespace-nowrap">
                             V-{{ new Intl.NumberFormat('es-ES').format(estudiante.cedula) }}
                         </th>
                         <td class="px-6 py-4">
                             {{ estudiante.nombre }}
+                        </td>
+                        <td class="px-6 py-4">
+                            {{ estudiante.id }}
                         </td>
                     </tr>
                 </tbody>
