@@ -1,13 +1,15 @@
 <script setup>
 import sideNavbar from '@/components/sideNavbar.vue'
 import { fetchEstudiantes, addEstudianteService, deleteEstudiante } from '@/services/estudiantesService'
+import { getStudentsLength } from '@/services/queryLengths'
 import { ref, onMounted } from 'vue'
 
 const items = ref([])
-const page = ref(1)
-const limit = ref(10)
 const cedula = ref([])
 const nombre = ref([])
+const page = ref(1)
+const limit = ref(10)
+const studentsCount = ref(0)
 
 const fetchData = async () => {
     try {
@@ -52,8 +54,9 @@ const deleteStudent = async (id) => {
     }
 }
 
-onMounted(() => {
-    fetchData()
+onMounted(async () => {
+    await fetchData()
+    studentsCount.value = await getStudentsLength()
 })
 
 </script>
@@ -65,7 +68,7 @@ onMounted(() => {
     <main class="bg-gray-100 min-h-screen px-20 py-10 ml-60 mx-auto">
 
         <h1 class="text-4xl font-black mb-2">
-            Estudiantes
+            Estudiantes ({{ studentsCount }})
         </h1>
         <div id="toast-success" class="fixed top-5 right-5 z-50 flex items-center w-full max-w-xs p-4 mb-4 text-green-500 bg-white rounded-lg shadow hidden" role="alert">
         <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-green-500 bg-green-100 rounded-lg">
