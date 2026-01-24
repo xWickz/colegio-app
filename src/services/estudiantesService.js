@@ -1,8 +1,8 @@
 import axios from 'axios'
 
-export async function fetchEstudiantes(page = 1, limit = 10) {
+export async function fetchEstudiantes(page = 1, limit = 10, search = "") {
     const offset = (page - 1)  * limit;
-    const response = await axios.get(`http://localhost:3000/api/data/estudiantes?limit=${limit}&offset=${offset}`);
+    const response = await axios.get(`http://localhost:3000/api/data/estudiantes?limit=${limit}&offset=${offset}&search=${encodeURIComponent(search)}`);
     return response.data
 }
 

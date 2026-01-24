@@ -44,12 +44,19 @@ app.get("/api/data/estudiantes", (req, res) => {
 
   const limit = Number(req.query.limit) || DEFAULTS.DEFAULT_LIMIT;
   const offset = Number(req.query.offset) || 0;
+  const search = req.query.search || "";
 
-  const query = `SELECT * FROM estudiantes LIMIT ${limit} OFFSET ${offset}`;
+  let query = "SELECT * FROM estudiantes";
+  let params = [];
 
-  connection.query(query, (err, results) => {
+  if (search) {
+    query += " WHERE nombre LIKE ? OR cedula LIKE ?";
+    params.push(`%${search}%`, `%${search}%`);
+  }
+
+  query += ` LIMIT ${limit} OFFSET ${offset}`;
+  connection.query(query, params,(err, results) => {
     if (err) {
-      console.error("Error fetching data:", err);
       res.status(500).send("Error fetching data");
       return;
     }
