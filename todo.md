@@ -21,3 +21,16 @@ donde:
 
 pagos.vue
 donde:
+
+GRADOS:
+1er grado (1)
+2do grado (2)
+3er grado (3)
+4to grado (4)
+5to grado (5)
+6to grado (6)
+1er año (7)
+2do año (8)
+3er año (9)
+4to año (10)
+5to año (11)

@@ -55,6 +55,7 @@ app.get("/api/data/estudiantes", (req, res) => {
   }
 
   query += ` LIMIT ${limit} OFFSET ${offset}`;
+
   connection.query(query, params,(err, results) => {
     if (err) {
       res.status(500).send("Error fetching data");
@@ -62,6 +63,7 @@ app.get("/api/data/estudiantes", (req, res) => {
     }
 
     res.json(results);
+
   });
 });
 
@@ -86,6 +88,20 @@ app.get("/api/data/estudiantes/length", async (req, res) => {
       return;
     }
     res.json(results[0]);
+  });
+});
+
+// GET Materias Estudiante
+app.get("/api/data/estudiantes/:cedula/materias", (req, res) => {
+  const { cedula } = req.params;
+  const query = "SELECT m.id, m.materia_nombre FROM materias_asignadas ma JOIN materias m ON ma.id_materia = m.id WHERE ma.cedula_estudiante = ?";
+  connection.query(query, [cedula], (err, results) => {
+    if (err) {
+      console.error("Error fetching materias for estudiante:", err);
+      res.status(500).send("Error fetching materias for estudiante");
+      return;
+    }
+    res.json(results);
   });
 });
 
