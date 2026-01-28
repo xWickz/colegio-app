@@ -1,8 +1,20 @@
 <script setup>
 import sideNavbar from '@/components/sideNavbar.vue'
-import { fetchEstudiantes, addEstudianteService, deleteEstudiante } from '@/services/estudiantesService'
+import { fetchEstudiantes, addEstudianteService, deleteEstudiante, fetchEstudianteMateria } from '@/services/estudiantesService'
 import { getStudentsLength } from '@/services/queryLengths'
+
 import { ref, onMounted, computed } from 'vue'
+
+// Estado para dropdown de acciones
+const openDropdownId = ref(null)
+
+const toggleDropdown = (id) => {
+    openDropdownId.value = openDropdownId.value === id ? null : id
+}
+
+const closeDropdown = () => {
+    openDropdownId.value = null
+}
 
 const search = ref("")
 const items = ref([])
@@ -58,6 +70,28 @@ const deleteStudent = async (id) => {
     }
 }
 
+
+// Modal de información de estudiante
+const selectedStudent = ref(null)
+const materias = ref([])
+const loadingMaterias = ref(false)
+
+const openInfoModal = async (estudiante) => {
+    selectedStudent.value = estudiante
+    materias.value = []
+    loadingMaterias.value = true
+    try {
+        materias.value = await fetchEstudianteMateria(estudiante.cedula)
+    } catch (e) {
+        materias.value = []
+    }
+    loadingMaterias.value = false
+}
+const closeInfoModal = () => {
+    selectedStudent.value = null
+    materias.value = []
+}
+
 // Pagination
 const prevPage = () => {
     if (page.value > 1) {
@@ -75,10 +109,25 @@ const nextPage = () => {
 
 const goToPage = (n) => {
     if (n !== page.value) {
-        page.value = n 
+        page.value = n
         fetchData()
     }
 }
+
+// a ser exportado a utils, por favor
+const STUDENTS_GRADES = [
+    '1er grado',
+    '2do grado',
+    '3er grado',
+    '4to grado',
+    '5to grado',
+    '6to grado',
+    '1er año',
+    '2do año',
+    '3er año',
+    '4to año',
+    '5to año'
+];
 
 onMounted(async () => {
     await fetchData()
@@ -129,7 +178,7 @@ onMounted(async () => {
         </button>
 
         <div id="crud-modal" tabindex="-1" aria-hidden="true"
-            class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+            class="hidden bg-black/50 overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-full max-h-full">
             <div class="relative p-4 w-full max-w-md max-h-full">
                 <div class="relative bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6">
                     <div class="flex items-center justify-between border-b border-default pb-4 md:pb-5">
@@ -149,7 +198,8 @@ onMounted(async () => {
                     </div>
                     <div class="grid gap-4 grid-cols-2 py-4 md:py-6">
                         <div class="col-span-2">
-                            <label for="name" class="block mb-2.5 text-sm font-medium text-heading">Nombre Completo</label>
+                            <label for="name" class="block mb-2.5 text-sm font-medium text-heading">Nombre
+                                Completo</label>
                             <input v-model="nombre" type="text" name="name" id="name"
                                 class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body"
                                 placeholder="Santiago" required="">
@@ -194,14 +244,15 @@ onMounted(async () => {
                 <label for="input-group-1" class="sr-only">Busqueda de Alumno</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                        <svg class="w-4 h-4 text-body" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/></svg>
+                        <svg class="w-4 h-4 text-body" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
+                            height="24" fill="none" viewBox="0 0 24 24">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-width="2"
+                                d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z" />
+                        </svg>
                     </div>
-                    <input type="text"
-                    v-model="search"
-                    @input="fetchData" 
-                    id="input-group-1" 
-                    class="block w-full max-w-96 ps-9 pe-3 py-2 bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand px-3  shadow-xs placeholder:text-body" 
-                    placeholder="Buscar alumno">
+                    <input type="text" v-model="search" @input="fetchData" id="input-group-1"
+                        class="block w-full max-w-96 ps-9 pe-3 py-2 bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand px-3  shadow-xs placeholder:text-body"
+                        placeholder="Buscar alumno">
                 </div>
             </div>
             <table class="w-full text-sm text-left rtl:text-right text-body">
@@ -214,6 +265,9 @@ onMounted(async () => {
                             Nombre
                         </th>
                         <th scope="col" class="px-6 py-3 font-medium">
+                            Grado
+                        </th>
+                        <th scope="col" class="px-6 py-3 font-medium">
                             Acciones
                         </th>
                     </tr>
@@ -221,18 +275,102 @@ onMounted(async () => {
                 <tbody>
                     <tr v-for="estudiante in items" :key="estudiante.id"
                         class="bg-neutral-primary border-b border-default hover:bg-neutral-secondary">
-                        <th scope="row" class="px-6 py-4 font-medium text-heading whitespace-nowrap blur-xs">
+                        <th scope="row" class="px-6 py-4 font-medium text-heading whitespace-nowrap">
                             V-{{ new Intl.NumberFormat('es-ES').format(estudiante.cedula) }}
                         </th>
-                        <td class="px-6 py-4 blur-xs">
+                        <td class="px-6 py-4">
                             {{ estudiante.nombre }}
                         </td>
                         <td class="px-6 py-4">
-                            {{ estudiante.id }}
+                            {{ STUDENTS_GRADES[estudiante.grado] }}
                         </td>
+                        <td class="px-6 py-4">
+                            <div class="relative">
+                                <button :id="'accionesButton_' + estudiante.id" @click="toggleDropdown(estudiante.id)"
+                                    class="inline-flex items-center justify-center text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:text-heading focus:ring-4 focus:ring-neutral-tertiary shadow-xs font-medium leading-5 rounded-base text-sm px-3 py-2 focus:outline-none"
+                                    type="button">
+                                    Acciones
+                                    <svg class="w-4 h-4 ms-1.5 -me-0.5" aria-hidden="true"
+                                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
+                                        viewBox="0 0 24 24">
+                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                            stroke-width="2" d="m19 9-7 7-7-7" />
+                                    </svg>
+                                </button>
+
+                                <div v-if="openDropdownId === estudiante.id"
+                                    class="z-10 absolute mt-2 bg-neutral-primary-medium border border-default-medium rounded-base shadow-lg w-32"
+                                    @click.outside="closeDropdown">
+                                    <ul class="p-2 text-sm text-body font-small"
+                                        :aria-labelledby="'accionesButton_' + estudiante.id">
+                                        <li>
+                                            <a href="#"
+                                                class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Editar
+                                                Info.</a>
+                                        </li>
+                                        <li>
+                                            <button type="button"
+                                                class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded"
+                                                @click="openInfoModal(estudiante)">Ver Info.</button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Modal de información de estudiante controlado por Vue -->
+                        <div v-if="selectedStudent"
+                            class="fixed top-0 right-0 left-0 z-50 flex justify-center items-center w-full h-full bg-black/10"
+                            @click.outside="closeInfoModal">
+                            <div class="relative p-4 w-full max-w-2xl max-h-full">
+                                <div
+                                    class="relative bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6">
+                                    <div class="flex items-center justify-between border-b border-default pb-4 md:pb-5">
+                                        <h3 class="text-lg font-medium text-heading">
+                                            Información del estudiante
+                                        </h3>
+                                        <button type="button"
+                                            class="text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 ms-auto inline-flex justify-center items-center"
+                                            @click="closeInfoModal">
+                                            <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                                                width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                                <path stroke="currentColor" stroke-linecap="round"
+                                                    stroke-linejoin="round" stroke-width="2"
+                                                    d="M6 18 17.94 6M18 18 6.06 6" />
+                                            </svg>
+                                            <span class="sr-only">Cerrar modal</span>
+                                        </button>
+                                    </div>
+                                    <div class="space-y-4 md:space-y-6 py-4 md:py-6">
+                                        <p class="leading-relaxed text-body">
+                                            <strong>Nombre:</strong> {{ selectedStudent.nombre }}
+                                        </p>
+                                        <p class="leading-relaxed text-body">
+                                            <strong>Cédula:</strong> V-{{ new
+                                                Intl.NumberFormat('es-ES').format(selectedStudent.cedula) }}
+                                        </p>
+                                        <div>
+                                            <strong>Materias asignadas:</strong>
+                                            <div v-if="loadingMaterias" class="text-sm text-body">Cargando materias...
+                                            </div>
+                                            <ul v-else-if="materias.length > 0" class="list-disc list-inside mt-1">
+                                                <li v-for="materia in materias" :key="materia.id">{{
+                                                    materia.materia_nombre }}</li>
+                                            </ul>
+                                            <div v-else class="text-sm text-body">Sin materias asignadas</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center border-t border-default space-x-4 pt-4 md:pt-5">
+                                        <button @click="closeInfoModal" type="button"
+                                            class="text-white bg-brand box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">Cerrar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </tr>
                 </tbody>
             </table>
+
             <nav class="flex items-center flex-column flex-wrap md:flex-row justify-between p-4"
                 aria-label="Table navigation">
                 <span class="text-sm font-normal text-body mb-4 md:mb-0 block w-full md:inline md:w-auto">Mostrando

@@ -20,3 +20,8 @@ export async function updateEstudiante(id, cedula, nombre) {
             nombre: nombre.value
         });
 }
+
+export async function fetchEstudianteMateria(cedula) {
+    const response = await axios.get(`http://localhost:3000/api/data/estudiantes/${cedula}/materias`);
+    return response.data;
+}
