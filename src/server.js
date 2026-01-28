@@ -5,7 +5,7 @@ import { z } from "zod";
 
 import { DEFAULTS } from "./config.js";
 import EstudianteSchema from "./schemas/estudiantes.js";
-
+import materiaSchema from "./schemas/materias.js";
 
 const app = express();
 
@@ -40,6 +40,7 @@ app.get("/", (req, res) => {
 });
 
 // api endpoint to fetch data (GET)
+// GET Estudiantes
 app.get("/api/data/estudiantes", (req, res) => {
 
   const limit = Number(req.query.limit) || DEFAULTS.DEFAULT_LIMIT;
@@ -67,6 +68,7 @@ app.get("/api/data/estudiantes", (req, res) => {
   });
 });
 
+// GET Profesores
 app.get("/api/data/profesores", (req, res) => {
   const query = "SELECT * FROM profesores";
   connection.query(query, (err, results) => {
@@ -79,8 +81,35 @@ app.get("/api/data/profesores", (req, res) => {
   });
 });
 
+// GET Estudiantes Length
 app.get("/api/data/estudiantes/length", async (req, res) => {
   const query = "SELECT COUNT(*) AS length FROM estudiantes";
+  connection.query(query, (err, results) => {
+    if (err) {
+      console.error("Error fetching data length:", err);
+      res.status(500).send("Error fetching data length");
+      return;
+    }
+    res.json(results[0]);
+  });
+});
+
+// GET Materias Length
+app.get("/api/data/materias/length", async (req, res) => {
+  const query = "SELECT COUNT(*) AS length FROM materias";
+  connection.query(query, (err, results) => {
+    if (err) {
+      console.error("Error fetching data length:", err);
+      res.status(500).send("Error fetching data length");
+      return;
+    }
+    res.json(results[0]);
+  });
+});
+
+// GET Profesores Length
+app.get("/api/data/profesores/length", async (req, res) => {
+  const query = "SELECT COUNT(*) AS length FROM profesores";
   connection.query(query, (err, results) => {
     if (err) {
       console.error("Error fetching data length:", err);
@@ -99,6 +128,35 @@ app.get("/api/data/estudiantes/:cedula/materias", (req, res) => {
     if (err) {
       console.error("Error fetching materias for estudiante:", err);
       res.status(500).send("Error fetching materias for estudiante");
+      return;
+    }
+    res.json(results);
+  });
+});
+
+// GET Materias
+app.get("/api/data/materias", (req, res) => {
+  const limit = Number(req.query.limit) || DEFAULTS.DEFAULT_LIMIT;
+  const offset = Number(req.query.offset) || 0;
+  const search = req.query.search || "";
+  
+  let query = `
+    SELECT m.id, m.materia_nombre, m.profesor_asignado, p.nombre AS nombre_profesor
+    FROM materias m
+    LEFT JOIN profesores p ON m.profesor_asignado = p.cedula`;
+  let params = [];
+
+  if (search) {
+    query += " WHERE materia_nombre LIKE ?";
+    params.push(`%${search}%`);
+  }
+
+  query += ` LIMIT ${limit} OFFSET ${offset}`;
+
+  connection.query(query, params, (err, results) => {
+    if (err) {
+      console.error("Error fetching data:", err);
+      res.status(500).send("Error fetching data");
       return;
     }
     res.json(results);
@@ -154,7 +212,29 @@ app.post("/api/data/profesores", (req, res) => {
   });
 });
 
-// api endpoint to delete data (DELETE)
+// POST Materia
+app.post("/api/data/materias", (req, res) => {
+  try {
+    const validateData = materiaSchema.parse(req.body);
+    const { nombre } = validateData;
+
+    const query = "INSERT INTO materias (materia_nombre) VALUES (?)";
+
+    connection.query(query, [nombre], (err, results) => {
+      if (err) {
+        console.error("Error inserting data:", err);
+        res.status(500).send("Error inserting data");
+        return;
+      }
+      res.status(201).send("Data inserted successfully");
+    });
+  } catch (err) {
+    if (err instanceof z.ZodError)
+      return res.status(400).json({ errors: err.errors });
+    console.error(err);
+    res.status(500).send("Internal server error");
+  }
+});
 
 // DELETE Estudiantes
 app.delete("/api/data/estudiantes/:id", (req, res) => {

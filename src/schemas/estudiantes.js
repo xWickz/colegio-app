@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from 'zod'
 
 export const EstudianteSchema = z.object({
     cedula: z.number().int().min(1, 'Cédula es requerida'),
