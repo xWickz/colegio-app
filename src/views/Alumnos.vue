@@ -371,6 +371,10 @@ onMounted(async () => {
                 </tbody>
             </table>
 
+            <div v-if="search && items.length === 0" class="flex justify-center items-center py-8">
+                <span class=" text-body text-center">No se ha encontrado nada en la búsqueda.</span>
+            </div>
+            
             <nav class="flex items-center flex-column flex-wrap md:flex-row justify-between p-4"
                 aria-label="Table navigation">
                 <span class="text-sm font-normal text-body mb-4 md:mb-0 block w-full md:inline md:w-auto">Mostrando
