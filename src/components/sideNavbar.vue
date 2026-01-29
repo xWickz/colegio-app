@@ -1,3 +1,19 @@
+<script setup>
+import { ref, onMounted } from 'vue'
+import { getUsuarioActual } from '@/services/auth'
+
+const usuario = ref(getUsuarioActual())
+
+// Actualiza el usuario cuando cambie el token (por ejemplo, después de login)
+window.addEventListener('storage', () => {
+  usuario.value = getUsuarioActual()
+})
+
+onMounted(() => {
+  usuario.value = getUsuarioActual()
+})
+</script>
+
 <template>
     
 <button data-drawer-target="default-sidebar" data-drawer-toggle="default-sidebar" aria-controls="default-sidebar" type="button" class="text-heading bg-transparent box-border border border-transparent hover:bg-neutral-secondary-medium focus:ring-4 focus:ring-neutral-tertiary font-medium leading-5 rounded-base ms-3 mt-3 text-sm p-2 focus:outline-none inline-flex sm:hidden">
@@ -10,6 +26,15 @@
 <aside id="default-sidebar" class="fixed top-0 left-0 z-40 w-64 h-full transition-transform -translate-x-full sm:translate-x-0 bg-white" aria-label="Sidebar">
    <div class="h-full px-3 py-4 overflow-y-auto bg-neutral-primary-soft border-e border-default">
       <ul class="space-y-2 font-medium">
+         <span v-if="usuario" class="text-sm text-center font-bold text-body-subtle">{{ usuario }}</span>
+         <li>
+            <RouterLink to="/login">
+                <a href="#" class="flex items-center px-2 py-1.5 text-body rounded-base hover:bg-neutral-tertiary hover:text-fg-brand group">
+               <svg class="shrink-0 w-5 h-5 transition duration-75 group-hover:text-fg-brand" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M16 19h4a1 1 0 0 0 1-1v-1a3 3 0 0 0-3-3h-2m-2.236-4a3 3 0 1 0 0-4M3 18v-1a3 3 0 0 1 3-3h4a3 3 0 0 1 3 3v1a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1Zm8-10a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
+               <span class="ms-3">Login</span>
+                </a>
+            </RouterLink>
+         </li>
          <li>
             <RouterLink to="/">
                 <a href="#" class="flex items-center px-2 py-1.5 text-body rounded-base hover:bg-neutral-tertiary hover:text-fg-brand group">
