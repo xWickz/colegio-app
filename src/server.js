@@ -1,6 +1,8 @@
 import express from "express";
 import mysql from "mysql";
 import cors from "cors";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 import { z } from "zod";
 
 import { DEFAULTS } from "./config.js";
@@ -27,12 +29,29 @@ connection.connect((err) => {
 // Middleware to parse JSON bodies
 app.use(express.json());
 
+// Middleware to verify JWT authentication
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+
+  if (!token) return res.status(401).json({ message: "No token provided" });
+
+  jwt.verify(token, "secret_key", (err, user) => {
+    if (err) return res.status(403).json({ message: "Invalid token" });
+    req.user = user;
+    next();
+  });
+}
+
 // Enable CORS for all routes
 app.use(
   cors({
     origin: "http://localhost:5173", // Adjust the origin as needed
   }),
 );
+
+// Require authentication for all /api/data routes
+//app.use("/api/data", authenticateToken);
 
 // Simple route to test server
 app.get("/", (req, res) => {
@@ -234,6 +253,42 @@ app.post("/api/data/materias", (req, res) => {
     console.error(err);
     res.status(500).send("Internal server error");
   }
+});
+
+// POST Login
+app.post("/api/login", (req, res) => {
+  const { usuario, password } = req.body;
+
+  if (!usuario || !password) {
+    return res.status(400).send("Usuario and password are required");
+  }
+
+  const query = "SELECT * FROM usuarios WHERE usuario = ?";
+  connection.query(query, [usuario], async (err, results) => {
+    if (err) {
+      console.error("Error fetching user:", err);
+      return res.status(500).send("Error fetching user");
+    }
+
+    if (results.length === 0) {
+      return res.status(401).send("Invalid credentials");
+    }
+
+    const user = results[0];
+    const passwordMatch = await bcrypt.compare(password, user.password);
+
+    if (!passwordMatch) {
+      return res.status(401).send("Invalid credentials");
+    }
+
+    // JWT
+    const token = jwt.sign(
+      { id: user.id, usuario: user.usuario },
+      "secret_key", { expiresIn: "1h" }
+    );
+
+    res.json({ token });
+  });
 });
 
 // DELETE Estudiantes

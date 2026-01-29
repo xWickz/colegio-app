@@ -4,6 +4,7 @@ import Home from '@/views/Home.vue'
 import Alumnos from '@/views/Alumnos.vue'
 import Profesores from '@/views/Profesores.vue'
 import Materias from '@/views/Materias.vue'
+import Login from '@/views/Login.vue'
 
 const routes = [
     {
@@ -25,6 +26,11 @@ const routes = [
         path: '/materias',
         name: 'Materias',
         component: Materias
+    },
+    {
+        path: '/login',
+        name: 'Login',
+        component: Login
     }
 ]
 
