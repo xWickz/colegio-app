@@ -1,13 +1,22 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { getUsuarioActual } from '@/services/auth'
+import { useRouter } from 'vue-router'
+import { showToast } from '@/services/toast'
 
 const usuario = ref(getUsuarioActual())
+const router = useRouter()
 
 // Actualiza el usuario cuando cambie el token (por ejemplo, después de login)
 window.addEventListener('storage', () => {
   usuario.value = getUsuarioActual()
 })
+
+function logout() {
+   localStorage.removeItem('token')
+   showToast('Has cerrado session', 'success')
+   router.push('/login')
+}
 
 onMounted(() => {
   usuario.value = getUsuarioActual()
@@ -67,6 +76,9 @@ onMounted(() => {
                 </a>
             </RouterLink>
          </li>
+      <button v-if="usuario" @click="logout" class="mt-4 px-4 py-2 bg-red-500 text-white rounded">
+         Cerrar sesión
+      </button>
       </ul>
    </div>
 </aside>

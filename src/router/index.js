@@ -15,7 +15,8 @@ const routes = [
     {
         path: '/alumnos',
         name: 'Alumnos',
-        component: Alumnos
+        component: Alumnos,
+        meta: { requiresAuth: true }
     },
     {
         path: '/profesores',
@@ -38,3 +39,14 @@ export const router = createRouter({
     history: createWebHistory(),
     routes
 });
+
+router.beforeEach((to, from, next) => {
+    const token = localStorage.getItem('token');
+    if (to.meta.requiresAuth && !token) {
+        next('/login')
+    } else {
+        next()
+    }
+})
+
+export default router 
