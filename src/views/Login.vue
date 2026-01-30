@@ -1,7 +1,10 @@
 <script setup>
 import { ref } from 'vue'
 import axios from 'axios'
+import { showToast } from '@/services/toast'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const usuario = ref('')
 const password = ref('')
 const error = ref('')
@@ -16,8 +19,10 @@ const login = async () => {
         })
 
         localStorage.setItem('token', response.data.token)
-        window.location.href = '/'
+        showToast('Iniciaste sesion', 'success')
+        router.push('/')
     } catch (err) {
+        showToast('Credenciales invalidas', 'error')
         error.value = 'Valores incorrectos'
     }
 }
