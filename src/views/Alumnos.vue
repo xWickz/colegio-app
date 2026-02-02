@@ -2,8 +2,10 @@
 import sideNavbar from '@/components/sideNavbar.vue'
 import { fetchEstudiantes, addEstudianteService, deleteEstudiante, fetchEstudianteMateria } from '@/services/estudiantesService'
 import { getStudentsLength } from '@/services/queryLengths'
-
+import { showToast } from '@/services/toast'
 import { ref, onMounted, computed } from 'vue'
+
+showToast('Un mensaje un poco opcional.', '')
 
 // Estado para dropdown de acciones
 const openDropdownId = ref(null)
@@ -30,6 +32,7 @@ const fetchData = async () => {
     try {
         items.value = await fetchEstudiantes(page.value, limit.value, search.value) // pagina, limites
     } catch (error) {
+        showToast('Ocurrió un error', 'error')
         console.error(error)
     }
 }
@@ -44,17 +47,12 @@ const addEstudiante = async () => {
         nombre.value = ''
         await fetchData()
         studentsCount.value = await getStudentsLength()
-
-        const toast = document.getElementById('toast-success')
-        if (toast) {
-            toast.classList.remove('hidden')
-            setTimeout(() => toast.classList.add('hidden'), 3000)
-        }
-
+        showToast('Estudiante agregado correctamente!', 'success')
 
     } catch (error) {
 
         console.error(error)
+        showToast(error.request?.response || "Error inesperado", 'error', 8000)
         alert(error.request?.response || "Error inesperado")
 
     }
@@ -64,6 +62,7 @@ const deleteStudent = async (id) => {
     try {
         await deleteEstudiante(id)
         fetchData()
+        showToast('Estudiante eliminado!', 'success', 5000)
     } catch (error) {
         console.error(error)
         alert('Error')
@@ -90,6 +89,35 @@ const openInfoModal = async (estudiante) => {
 const closeInfoModal = () => {
     selectedStudent.value = null
     materias.value = []
+}
+
+// Modal de editar información de estudiante
+const studentToEdit = ref(null)
+
+const openEditModal = async (estudiante) => {
+    studentToEdit.value = estudiante 
+}
+
+const closeEditModal = () => {
+    studentToEdit.value = null 
+}
+
+// Modal para eliminar un estudiante
+const studentToDelete = ref(null)
+
+const openDeleteModal = (estudiante) => {
+    studentToDelete.value = estudiante 
+}
+
+const closeDeleteModal = () => {
+    studentToDelete.value = null 
+}
+
+const confirmDelete = async () => {
+    if (studentToDelete.value) {
+        await deleteStudent(studentToDelete.value.id)
+        closeDeleteModal()
+    }
 }
 
 // Pagination
@@ -145,31 +173,6 @@ onMounted(async () => {
         <h1 class="text-4xl font-black mb-2">
             Estudiantes ({{ studentsCount }})
         </h1>
-
-        <div id="toast-success"
-            class="fixed top-5 right-5 z-50 flex items-center w-full max-w-xs p-4 mb-4 text-green-500 bg-white rounded-lg shadow hidden"
-            role="alert">
-            <div
-                class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-green-500 bg-green-100 rounded-lg">
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd"
-                        d="M16.707 5.293a1 1 0 00-1.414 0L9 11.586 6.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l7-7a1 1 0 000-1.414z"
-                        clip-rule="evenodd"></path>
-                </svg>
-            </div>
-            <div class="ms-3 text-sm font-normal">Estudiante añadido correctamente.</div>
-            <button type="button"
-                class="ms-auto -mx-1.5 -my-1.5 bg-white text-gray-400 hover:text-gray-900 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 inline-flex h-8 w-8"
-                data-dismiss-target="#toast-success" aria-label="Close"
-                onclick="document.getElementById('toast-success').classList.add('hidden')">
-                <span class="sr-only">Cerrar</span>
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd"
-                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                        clip-rule="evenodd"></path>
-                </svg>
-            </button>
-        </div>
 
         <button data-modal-target="crud-modal" data-modal-toggle="crud-modal"
             class="text-white bg-brand box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none mb-3"
@@ -304,14 +307,19 @@ onMounted(async () => {
                                     <ul class="p-2 text-sm text-body font-small"
                                         :aria-labelledby="'accionesButton_' + estudiante.id">
                                         <li>
-                                            <a href="#"
-                                                class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded">Editar
-                                                Info.</a>
+                                            <button type="button"
+                                                class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded"
+                                                @click="openEditModal(estudiante)">Editar Info.</button>
                                         </li>
                                         <li>
                                             <button type="button"
                                                 class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded"
                                                 @click="openInfoModal(estudiante)">Ver Info.</button>
+                                        </li>
+                                        <li>
+                                            <button type="button"
+                                                class="inline-flex items-center w-full p-2 hover:bg-neutral-tertiary-medium hover:text-heading rounded"
+                                                @click="openDeleteModal(estudiante)">Eliminar</button>
                                         </li>
                                     </ul>
                                 </div>
@@ -367,6 +375,37 @@ onMounted(async () => {
                                 </div>
                             </div>
                         </div>
+                        <!-- Modal de información de estudiante controlado por Vue -->
+
+                        <!-- Modal de confirmación de eliminación -->
+                            <div v-if="studentToDelete"
+                                class="fixed top-0 right-0 left-0 z-50 flex justify-center items-center w-full h-full bg-black/10"
+                                @click.outside="closeDeleteModal">
+                                <div class="relative p-4 w-full max-w-md max-h-full">
+                                    <div class="relative bg-white border border-default rounded-base shadow-sm p-6">
+                                        <h3 class="text-lg font-medium text-heading mb-4">
+                                            ¿Eliminar estudiante?
+                                        </h3>
+                                        <p class="mb-6 text-body">
+                                            ¿Estás seguro de que deseas eliminar a <strong>{{ studentToDelete.nombre
+                                                }}</strong>?
+                                            Esta acción no se puede deshacer.
+                                        </p>
+                                        <div class="flex justify-end gap-3">
+                                            <button @click="closeDeleteModal" type="button"
+                                                class="px-4 py-2 rounded-base bg-neutral-secondary-medium text-body hover:bg-neutral-tertiary-medium">
+                                                Cancelar
+                                            </button>
+                                            <button @click="confirmDelete" type="button"
+                                                class="px-4 py-2 rounded-base bg-red-600 text-white hover:bg-red-700">
+                                                Eliminar
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Modal de confirmación de eliminación -->
+
                     </tr>
                 </tbody>
             </table>
