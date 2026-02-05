@@ -13,11 +13,12 @@ import materiaSchema from "./schemas/materias.js";
 
 const app = express();
 
+// TODO: use .env variables for DB connection
 const connection = mysql.createConnection({
-  host: process.env.MYSQL_HOST || "localhost",
-  user: process.env.MYSQL_USER || "root",
-  password: process.env.MYSQL_PASSWORD || "admin",
-  database: process.env.MYSQL_DATABASE || "colegio",
+  host: "localhost",
+  user: "root",
+  password: "root",
+  database: "colegio",
 });
 
 connection.connect((err) => {
@@ -38,7 +39,7 @@ function authenticateToken(req, res, next) {
 
   if (!token) return res.status(401).json({ message: "No token provided" });
 
-  jwt.verify(token, "secret_key", (err, user) => {
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) return res.status(403).json({ message: "Invalid token" });
     req.user = user;
     next();
@@ -286,7 +287,7 @@ app.post("/api/login", (req, res) => {
     // JWT
     const token = jwt.sign(
       { id: user.id, usuario: user.usuario },
-      "secret_key", { expiresIn: "1h" }
+      process.env.JWT_SECRET, { expiresIn: "1h" }
     );
 
     res.json({ token });

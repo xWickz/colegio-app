@@ -59,8 +59,8 @@ onMounted(() => {
 
 <template>
     <sideNavbar/>
-    <main class="bg-gray-100 min-h-screen px-20 py-10 ml-60 mx-auto">
-        <div class="mt-10">
+    <main class="bg-gray-100 min-h-screen px-20 py-10 ml-60 mx-auto dark:bg-dark">
+        <div class="mt-10 dark:text-white">
           <h1>Profesores:</h1>
           <ul>
             
