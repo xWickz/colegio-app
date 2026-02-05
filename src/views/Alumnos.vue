@@ -1,11 +1,17 @@
 <script setup>
+import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue'
+import Pagination from '@/components/Pagination.vue'
 import sideNavbar from '@/components/sideNavbar.vue'
+import StudentInfoModal from '@/components/students/studentInfoModal.vue'
 import { fetchEstudiantes, addEstudianteService, deleteEstudiante, fetchEstudianteMateria } from '@/services/estudiantesService'
 import { getStudentsLength } from '@/services/queryLengths'
 import { showToast } from '@/services/toast'
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, reactive } from 'vue'
 
-showToast('Un mensaje un poco opcional.', '')
+const alumnoForm = reactive({
+    cedula: '',
+    nombre: ''
+})
 
 // Estado para dropdown de acciones
 const openDropdownId = ref(null)
@@ -20,8 +26,6 @@ const closeDropdown = () => {
 
 const search = ref("")
 const items = ref([])
-const cedula = ref([])
-const nombre = ref([])
 const page = ref(1)
 const limit = ref(10)
 const studentsCount = ref(0)
@@ -32,29 +36,27 @@ const fetchData = async () => {
     try {
         items.value = await fetchEstudiantes(page.value, limit.value, search.value) // pagina, limites
     } catch (error) {
-        showToast('Ocurrió un error', 'error')
-        console.error(error)
+        handleError(error)
     }
 }
 
 const addEstudiante = async () => {
-    if (!cedula.value || !nombre.value) return alert('Llena ambos campos')
+    if (!alumnoForm.cedula || !alumnoForm.nombre) {
+        showToast('Llena ambos campos!', 'error')
+        return
+    }
 
     try {
 
         await addEstudianteService(cedula.value, nombre.value)
-        cedula.value = ''
-        nombre.value = ''
+        alumnoForm.cedula = ''
+        alumnoForm.nombre = ''
         await fetchData()
         studentsCount.value = await getStudentsLength()
         showToast('Estudiante agregado correctamente!', 'success')
 
     } catch (error) {
-
-        console.error(error)
-        showToast(error.request?.response || "Error inesperado", 'error', 8000)
-        alert(error.request?.response || "Error inesperado")
-
+        handleError(error)
     }
 }
 
@@ -64,11 +66,14 @@ const deleteStudent = async (id) => {
         fetchData()
         showToast('Estudiante eliminado!', 'success', 5000)
     } catch (error) {
-        console.error(error)
-        alert('Error')
+        handleError(error)
     }
 }
 
+function handleError(error, mensaje = 'Error inesperado') {
+    console.error(error)
+    showToast(error.request?.response || mensaje, 'error', 8000)
+}
 
 // Modal de información de estudiante
 const selectedStudent = ref(null)
@@ -168,9 +173,9 @@ onMounted(async () => {
 
     <sideNavbar />
 
-    <main class="bg-gray-100 min-h-screen px-20 py-10 ml-60 mx-auto">
+    <main class="bg-gray-100 dark:bg-dark min-h-screen px-20 py-10 ml-60 mx-auto">
 
-        <h1 class="text-4xl font-black mb-2">
+        <h1 class="text-4xl font-black mb-2 dark:text-white">
             Estudiantes ({{ studentsCount }})
         </h1>
 
@@ -203,13 +208,13 @@ onMounted(async () => {
                         <div class="col-span-2">
                             <label for="name" class="block mb-2.5 text-sm font-medium text-heading">Nombre
                                 Completo</label>
-                            <input v-model="nombre" type="text" name="name" id="name"
+                            <input v-model="alumnoForm.nombre" type="text" name="name" id="name"
                                 class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body"
                                 placeholder="Santiago" required="">
                         </div>
                         <div class="col-span-2">
                             <label for="price" class="block mb-2.5 text-sm font-medium text-heading">Cedula</label>
-                            <input v-model="cedula" type="number" name="price" id="price"
+                            <input v-model="alumnoForm.cedula" type="number" name="price" id="price"
                                 class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body"
                                 placeholder="12345678" required="">
                         </div>
@@ -231,9 +236,9 @@ onMounted(async () => {
             </div>
         </div>
 
-        <div class="mb-4 flex items-center gap-2">
-            <label for="limit" class="font-medium">Registros por página:</label>
-            <select id="limit" v-model="limit" @change="fetchData" class="px-2 py-1 rounded">
+        <div class="mb-4 flex items-center gap-2 ">
+            <label for="limit" class="font-medium dark:text-white">Registros por página:</label>
+            <select id="limit" v-model="limit" @change="fetchData" class="px-2 py-1 rounded dark:text-white">
                 <option :value="1">1</option>
                 <option :value="5">5</option>
                 <option :value="10">10</option>
@@ -327,84 +332,21 @@ onMounted(async () => {
                         </td>
 
                         <!-- Modal de información de estudiante controlado por Vue -->
-                        <div v-if="selectedStudent"
-                            class="fixed top-0 right-0 left-0 z-50 flex justify-center items-center w-full h-full bg-black/10"
-                            @click.outside="closeInfoModal">
-                            <div class="relative p-4 w-full max-w-2xl max-h-full">
-                                <div
-                                    class="relative bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6">
-                                    <div class="flex items-center justify-between border-b border-default pb-4 md:pb-5">
-                                        <h3 class="text-lg font-medium text-heading">
-                                            Información del estudiante
-                                        </h3>
-                                        <button type="button"
-                                            class="text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 ms-auto inline-flex justify-center items-center"
-                                            @click="closeInfoModal">
-                                            <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                                                width="24" height="24" fill="none" viewBox="0 0 24 24">
-                                                <path stroke="currentColor" stroke-linecap="round"
-                                                    stroke-linejoin="round" stroke-width="2"
-                                                    d="M6 18 17.94 6M18 18 6.06 6" />
-                                            </svg>
-                                            <span class="sr-only">Cerrar modal</span>
-                                        </button>
-                                    </div>
-                                    <div class="space-y-4 md:space-y-6 py-4 md:py-6">
-                                        <p class="leading-relaxed text-body">
-                                            <strong>Nombre:</strong> {{ selectedStudent.nombre }}
-                                        </p>
-                                        <p class="leading-relaxed text-body">
-                                            <strong>Cédula:</strong> V-{{ new
-                                                Intl.NumberFormat('es-ES').format(selectedStudent.cedula) }}
-                                        </p>
-                                        <div>
-                                            <strong>Materias asignadas:</strong>
-                                            <div v-if="loadingMaterias" class="text-sm text-body">Cargando materias...
-                                            </div>
-                                            <ul v-else-if="materias.length > 0" class="list-disc list-inside mt-1">
-                                                <li v-for="materia in materias" :key="materia.id">{{
-                                                    materia.materia_nombre }}</li>
-                                            </ul>
-                                            <div v-else class="text-sm text-body">Sin materias asignadas</div>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-center border-t border-default space-x-4 pt-4 md:pt-5">
-                                        <button @click="closeInfoModal" type="button"
-                                            class="text-white bg-brand box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">Cerrar</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <StudentInfoModal
+                            :visible="!!selectedStudent"
+                            :student="selectedStudent"
+                            :materias="materias"
+                            :loadingMaterias="loadingMaterias"
+                            @close="closeInfoModal"/>
                         <!-- Modal de información de estudiante controlado por Vue -->
 
                         <!-- Modal de confirmación de eliminación -->
-                            <div v-if="studentToDelete"
-                                class="fixed top-0 right-0 left-0 z-50 flex justify-center items-center w-full h-full bg-black/10"
-                                @click.outside="closeDeleteModal">
-                                <div class="relative p-4 w-full max-w-md max-h-full">
-                                    <div class="relative bg-white border border-default rounded-base shadow-sm p-6">
-                                        <h3 class="text-lg font-medium text-heading mb-4">
-                                            ¿Eliminar estudiante?
-                                        </h3>
-                                        <p class="mb-6 text-body">
-                                            ¿Estás seguro de que deseas eliminar a <strong>{{ studentToDelete.nombre
-                                                }}</strong>?
-                                            Esta acción no se puede deshacer.
-                                        </p>
-                                        <div class="flex justify-end gap-3">
-                                            <button @click="closeDeleteModal" type="button"
-                                                class="px-4 py-2 rounded-base bg-neutral-secondary-medium text-body hover:bg-neutral-tertiary-medium">
-                                                Cancelar
-                                            </button>
-                                            <button @click="confirmDelete" type="button"
-                                                class="px-4 py-2 rounded-base bg-red-600 text-white hover:bg-red-700">
-                                                Eliminar
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- Modal de confirmación de eliminación -->
+                        <ConfirmDeleteModal
+                            :visible="!!studentToDelete"
+                            :student="studentToDelete"
+                            @cancel="closeDeleteModal"
+                            @confirm="confirmDelete"/>
+                        <!-- Modal de confirmación de eliminación -->
 
                     </tr>
                 </tbody>
@@ -414,29 +356,14 @@ onMounted(async () => {
                 <span class=" text-body text-center">No se ha encontrado nada en la búsqueda.</span>
             </div>
             
-            <nav class="flex items-center flex-column flex-wrap md:flex-row justify-between p-4"
-                aria-label="Table navigation">
-                <span class="text-sm font-normal text-body mb-4 md:mb-0 block w-full md:inline md:w-auto">Mostrando
-                    <span class="font-semibold text-heading">{{ (page - 1) * limit + 1 }}-{{ Math.min(page * limit,
-                        studentsCount) }}</span> de <span class="font-semibold text-heading">{{ studentsCount
-                        }}</span></span>
-                <ul class="flex -space-x-px text-sm">
-                    <li>
-                        <button @click="prevPage" :disabled="page === 1" href="#"
-                            :class="['flex items-center justify-center text-body bg-neutral-secondary-medium box-border border border-default-medium font-medium rounded-s-base text-sm px-3 h-9 focus:outline-none', page === totalPages ? 'text-fg-disabled bg-disabled focus:outline-none' : 'hover:bg-neutral-tertiary-medium hover:text-heading']">Previo</button>
-                    </li>
-                    <li v-for="n in totalPages" :key="n">
-                        <a @click="goToPage(n)" href="#"
-                            :class="['flex items-center justify-center text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:text-heading font-medium text-sm w-9 h-9 focus:outline-none', page === n ? 'text-fg-brand' : '']"
-                            :aria-current="page === n ? 'page' : null">{{ n }}</a>
-                    </li>
-                    <li>
-                        <button @click="nextPage" :disabled="page === totalPages" href="#"
-                            :class="['flex items-center justify-center text-body bg-neutral-secondary-medium box-border border border-default-medium font-medium rounded-e-base text-sm px-3 h-9 focus:outline-none', page === totalPages ? 'text-fg-disabled bg-disabled focus:outline-none' : 'hover:bg-neutral-tertiary-medium hover:text-heading']"
-                            type="button">Siguiente</button>
-                    </li>
-                </ul>
-            </nav>
+            <Pagination
+                :page="page"
+                :limit="limit"
+                :totalPages="totalPages"
+                :studentsCount="studentsCount"
+                @prev="prevPage"
+                @next="nextPage"
+                @go="goToPage"/>
 
         </div>
 

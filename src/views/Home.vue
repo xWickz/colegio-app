@@ -4,8 +4,8 @@ import sideNavbar from '@/components/sideNavbar.vue'
 
 <template>
   <sideNavbar/>
-  <main class="bg-gray-100 min-h-screen px-20 py-1 ml-60 mx-auto">
-    <h1 class="mt-20 font-bold text-3xl mb-3">
+  <main class="bg-gray-100 min-h-screen px-20 py-1 ml-60 mx-auto dark:bg-dark">
+    <h1 class="mt-20 font-bold text-3xl mb-3 dark:text-white">
       Panel Principal
     </h1>
 
