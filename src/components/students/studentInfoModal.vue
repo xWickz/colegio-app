@@ -24,16 +24,19 @@
         </div>
         <div class="space-y-4 md:space-y-6 py-4 md:py-6">
           <p class="leading-relaxed text-body">
-            <strong>Nombre:</strong> {{ student?.nombre }}
+            <strong>Nombre:</strong> {{ student?.nombre || 'Sin datos registrados' }}
           </p>
           <p class="leading-relaxed text-body">
-            <strong>Cédula:</strong> V-{{ formatCedula(student?.cedula) }}
+            <strong>Cédula:</strong> V-{{ formatCedula(student?.cedula) || 'Sin datos registrados' }}
+          </p>
+          <p class="leading-relaxed text-body">
+            <strong>Fecha de Nacimiento:</strong> {{ student?.fecha_nacimiento || 'Sin datos registrados' }}
           </p>
           <div>
             <strong>Materias asignadas:</strong>
             <div v-if="loadingMaterias" class="text-sm text-body">Cargando materias...</div>
             <ul v-else-if="materias.length > 0" class="list-disc list-inside mt-1">
-              <li v-for="materia in materias" :key="materia.id">{{ materia.materia_nombre }}</li>
+              <li v-for="materia in materias" :key="materia.id">{{ materia?.materia_nombre }}</li>
             </ul>
             <div v-else class="text-sm text-body">Sin materias asignadas</div>
           </div>

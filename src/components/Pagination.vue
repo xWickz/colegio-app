@@ -3,7 +3,7 @@
     <span class="text-sm font-normal text-body mb-4 md:mb-0 block w-full md:inline md:w-auto">
       Mostrando
       <span class="font-semibold text-heading">{{ start }}-{{ end }}</span>
-      de <span class="font-semibold text-heading">{{ studentsCount }}</span>
+      de <span class="font-semibold text-heading">{{ queryCount }}</span>
     </span>
     <ul class="flex -space-x-px text-sm">
       <li>
@@ -31,8 +31,8 @@ const props = defineProps({
   page: Number,
   limit: Number,
   totalPages: Number,
-  studentsCount: Number
+  queryCount: Number
 })
 const start = computed(() => (props.page - 1) * props.limit + 1)
-const end = computed(() => Math.min(props.page * props.limit, props.studentsCount))
+const end = computed(() => Math.min(props.page * props.limit, props.queryCount))
 </script>

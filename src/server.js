@@ -72,6 +72,7 @@ app.get("/api/data/estudiantes", (req, res) => {
   let query = "SELECT * FROM estudiantes";
   let params = [];
 
+  // Parametros de búsqueda
   if (search) {
     query += " WHERE nombre LIKE ? OR cedula LIKE ?";
     params.push(`%${search}%`, `%${search}%`);
@@ -325,9 +326,9 @@ app.delete("/api/data/profesores/:id", (req, res) => {
 // api endpoint to update data (PUT)
 app.put("/api/data/estudiantes/:id", (req, res) => {
   const { id } = req.params;
-  const { cedula, nombre } = req.body;
-  const query = "UPDATE estudiantes SET cedula = ?, nombre = ? WHERE id = ?";
-  connection.query(query, [cedula, nombre, id], (err, results) => {
+  const { cedula, nombre, grado, fecha_nacimiento } = req.body;
+  const query = "UPDATE estudiantes SET cedula = ?, nombre = ?, grado = ?, fecha_nacimiento = ? WHERE id = ?";
+  connection.query(query, [cedula, nombre, grado, fecha_nacimiento, id], (err, results) => {
     if (err) {
       console.error("Error updating data:", err);
       res.status(500).send("Error updating data");
