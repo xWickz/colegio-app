@@ -14,11 +14,13 @@ export async function deleteEstudiante(id) {
     return await axios.delete(`http://localhost:3000/api/data/estudiantes/${id}`);
 }
 
-export async function updateEstudiante(id, cedula, nombre) {
+export async function updateEstudiante(id, cedula, nombre, fecha_nacimiento, grado) {
     return await axios.put(`http://localhost:3000/api/data/estudiantes/${id}`, {
-            cedula: cedula.value,
-            nombre: nombre.value
-        });
+        cedula,
+        nombre,
+        fecha_nacimiento,
+        grado
+    });
 }
 
 export async function fetchEstudianteMateria(cedula) {

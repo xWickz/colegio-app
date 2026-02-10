@@ -2,16 +2,16 @@
 import ConfirmDeleteModal from '@/components/ConfirmDeleteModal.vue'
 import Pagination from '@/components/Pagination.vue'
 import sideNavbar from '@/components/sideNavbar.vue'
+import StudentEditModal from '@/components/students/studentEditModal.vue'
+import AddStudentModal from '@/components/students/AddStudentModal.vue'
 import StudentInfoModal from '@/components/students/studentInfoModal.vue'
-import { fetchEstudiantes, addEstudianteService, deleteEstudiante, fetchEstudianteMateria } from '@/services/estudiantesService'
+import { fetchEstudiantes, addEstudianteService, deleteEstudiante, fetchEstudianteMateria, updateEstudiante } from '@/services/estudiantesService'
 import { getStudentsLength } from '@/services/queryLengths'
 import { showToast } from '@/services/toast'
 import { ref, onMounted, computed, reactive } from 'vue'
+import { STUDENTS_GRADES } from '@/utils/students/grades'
 
-const alumnoForm = reactive({
-    cedula: '',
-    nombre: ''
-})
+const addModalVisible = ref(false)
 
 // Estado para dropdown de acciones
 const openDropdownId = ref(null)
@@ -40,21 +40,13 @@ const fetchData = async () => {
     }
 }
 
-const addEstudiante = async () => {
-    if (!alumnoForm.cedula || !alumnoForm.nombre) {
-        showToast('Llena ambos campos!', 'error')
-        return
-    }
-
+const handleAddStudent = async (nuevoAlumno) => {
     try {
-
-        await addEstudianteService(cedula.value, nombre.value)
-        alumnoForm.cedula = ''
-        alumnoForm.nombre = ''
+        await addEstudianteService(nuevoAlumno.cedula, nuevoAlumno.nombre, nuevoAlumno.fecha_nacimiento, nuevoAlumno.grado)
         await fetchData()
         studentsCount.value = await getStudentsLength()
         showToast('Estudiante agregado correctamente!', 'success')
-
+        addModalVisible.value = false
     } catch (error) {
         handleError(error)
     }
@@ -75,7 +67,21 @@ function handleError(error, mensaje = 'Error inesperado') {
     showToast(error.request?.response || mensaje, 'error', 8000)
 }
 
+// Manejar guardado de edición de estudiante
+const handleEditSave = async (alumnoEditado) => {
+    try {
+        await updateEstudiante(alumnoEditado.id, alumnoEditado.cedula, alumnoEditado.nombre, alumnoEditado.fecha_nacimiento, alumnoEditado.grado)
+        showToast('Estudiante actualizado correctamente!', 'success')
+        await fetchData()
+        studentsCount.value = await getStudentsLength()
+        closeEditModal()
+    } catch (error) {
+        handleError(error, 'Error al actualizar el estudiante')
+    }
+}
+
 // Modal de información de estudiante
+// Explicación: Vue controla por separado cada modal, es mejor asi (por ahora)
 const selectedStudent = ref(null)
 const materias = ref([])
 const loadingMaterias = ref(false)
@@ -147,21 +153,6 @@ const goToPage = (n) => {
     }
 }
 
-// a ser exportado a utils, por favor
-const STUDENTS_GRADES = [
-    '1er grado',
-    '2do grado',
-    '3er grado',
-    '4to grado',
-    '5to grado',
-    '6to grado',
-    '1er año',
-    '2do año',
-    '3er año',
-    '4to año',
-    '5to año'
-];
-
 onMounted(async () => {
     await fetchData()
     studentsCount.value = await getStudentsLength()
@@ -173,70 +164,14 @@ onMounted(async () => {
 
     <sideNavbar />
 
-    <main class="bg-gray-100 dark:bg-dark min-h-screen px-20 py-10 ml-60 mx-auto">
+    <main class="bg-gray-100 min-h-screen px-20 py-1 ml-60 mx-auto dark:bg-dark">
+            <h1 class="mt-5 font-bold text-3xl mb-3 dark:text-white">
+                Estudiantes ({{ studentsCount }})
+            </h1>
 
-        <h1 class="text-4xl font-black mb-2 dark:text-white">
-            Estudiantes ({{ studentsCount }})
-        </h1>
 
-        <button data-modal-target="crud-modal" data-modal-toggle="crud-modal"
-            class="text-white bg-brand box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none mb-3"
-            type="button">
-            Nuevo Alumno
-        </button>
-
-        <div id="crud-modal" tabindex="-1" aria-hidden="true"
-            class="hidden bg-black/50 overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-full max-h-full">
-            <div class="relative p-4 w-full max-w-md max-h-full">
-                <div class="relative bg-neutral-primary-soft border border-default rounded-base shadow-sm p-4 md:p-6">
-                    <div class="flex items-center justify-between border-b border-default pb-4 md:pb-5">
-                        <h3 class="text-lg font-medium text-heading">
-                            Añadir nuevo alumno
-                        </h3>
-                        <button type="button"
-                            class="text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 ms-auto inline-flex justify-center items-center"
-                            data-modal-hide="crud-modal">
-                            <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24"
-                                height="24" fill="none" viewBox="0 0 24 24">
-                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                    stroke-width="2" d="M6 18 17.94 6M18 18 6.06 6" />
-                            </svg>
-                            <span class="sr-only">Cancelar</span>
-                        </button>
-                    </div>
-                    <div class="grid gap-4 grid-cols-2 py-4 md:py-6">
-                        <div class="col-span-2">
-                            <label for="name" class="block mb-2.5 text-sm font-medium text-heading">Nombre
-                                Completo</label>
-                            <input v-model="alumnoForm.nombre" type="text" name="name" id="name"
-                                class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body"
-                                placeholder="Santiago" required="">
-                        </div>
-                        <div class="col-span-2">
-                            <label for="price" class="block mb-2.5 text-sm font-medium text-heading">Cedula</label>
-                            <input v-model="alumnoForm.cedula" type="number" name="price" id="price"
-                                class="bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand block w-full px-3 py-2.5 shadow-xs placeholder:text-body"
-                                placeholder="12345678" required="">
-                        </div>
-                    </div>
-                    <div class="flex items-center space-x-4 border-t border-default pt-4 md:pt-6">
-                        <button @click="addEstudiante" type="submit"
-                            class="inline-flex items-center  text-white bg-brand hover:bg-brand-strong box-border border border-transparent focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">
-                            <svg class="w-4 h-4 me-1.5 -ms-0.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                                width="24" height="24" fill="none" viewBox="0 0 24 24">
-                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                                    stroke-width="2" d="M5 12h14m-7 7V5" />
-                            </svg>
-                            Añadir
-                        </button>
-                        <button data-modal-hide="crud-modal" type="button"
-                            class="text-body bg-neutral-secondary-medium box-border border border-default-medium hover:bg-neutral-tertiary-medium hover:text-heading focus:ring-4 focus:ring-neutral-tertiary shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">Cancelar</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="mb-4 flex items-center gap-2 ">
+        <div class="mb-4 flex items-center gap-2">
+            <button @click="addModalVisible = true" type="button" class="text-white bg-brand box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">Agregar Estudiante</button>
             <label for="limit" class="font-medium dark:text-white">Registros por página:</label>
             <select id="limit" v-model="limit" @change="fetchData" class="px-2 py-1 rounded dark:text-white">
                 <option :value="1">1</option>
@@ -246,6 +181,8 @@ onMounted(async () => {
                 <option :value="50">50</option>
             </select>
         </div>
+
+        <AddStudentModal :visible="addModalVisible" @close="addModalVisible = false" @add="handleAddStudent" />
 
         <div class="relative overflow-x-auto bg-neutral-primary-soft shadow-xs rounded-base border border-default">
             <div class="p-4">
@@ -340,6 +277,17 @@ onMounted(async () => {
                             @close="closeInfoModal"/>
                         <!-- Modal de información de estudiante controlado por Vue -->
 
+                        <!-- Modal de editar información de estudiante controlado por Vue -->
+                        <StudentEditModal
+                            :visible="!!studentToEdit"
+                            :student="studentToEdit"
+                            :materias="materias"
+                            :loadingMaterias="loadingMaterias"
+                            @close="closeEditModal"
+                            @save="handleEditSave"
+                        />
+                        <!-- Modal de información de estudiante controlado por Vue -->
+
                         <!-- Modal de confirmación de eliminación -->
                         <ConfirmDeleteModal
                             :visible="!!studentToDelete"
@@ -360,7 +308,7 @@ onMounted(async () => {
                 :page="page"
                 :limit="limit"
                 :totalPages="totalPages"
-                :studentsCount="studentsCount"
+                :queryCount="studentsCount"
                 @prev="prevPage"
                 @next="nextPage"
                 @go="goToPage"/>
