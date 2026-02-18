@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { getUsuarioActual } from '@/services/auth'
+import { getUsuarioActual } from '@/services/authService'
 import { useRouter } from 'vue-router'
 import { showToast } from '@/services/toast'
 
@@ -21,7 +21,6 @@ function logout() {
 onMounted(() => {
    usuario.value = getUsuarioActual()
 
-   // --- Lógica de cambio de tema ---
    const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
    const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
    const themeToggleBtn = document.getElementById('theme-toggle');

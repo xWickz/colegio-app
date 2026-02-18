@@ -53,11 +53,25 @@
             <strong>Materias asignadas:</strong>
             <div v-if="loadingMaterias" class="text-sm text-body">Cargando materias...</div>
             <ul v-else-if="materias.length > 0" class="list-disc list-inside mt-1">
-              <li v-for="materia in materias" :key="materia.id">{{ materia?.materia_nombre }}</li>
+              <li v-for="materia in materias" :key="materia.id">{{ materia?.materia_nombre }} {{ materia?.id }}<span>eliminar</span></li>
             </ul>
-            <div v-else class="text-sm text-body">Sin materias asignadas</div>
+            <div v-else class="text-sm text-body">Sin materias asignadas XD</div>
           </div>
         </div>
+        <div>
+            <strong>Asignar materias</strong>
+            <select v-if="materias.length > 0" class="block w-full px-3 py-2.5 bg-neutral-secondary-medium border border-default-medium text-heading text-sm rounded-base focus:ring-brand focus:border-brand shadow-xs placeholder:text-body">
+                <option v-for="materia in materiasList" :key="materia.id" :value="materia.id">{{ materia?.materia_nombre }} {{ materia?.id }}</option>
+            </select>
+
+            <span>
+              <button type="button" class="text-white bg-brand hover:bg-brand-strong box-border border border-transparent focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-xs px-3 py-1.5 focus:outline-none">
+                Agregar materia
+              </button>
+            </span>
+
+        
+          </div>
         <div class="flex items-center border-t border-default space-x-4 pt-4 md:pt-5">
           <button @click="emitClose" type="button"
             class="text-white bg-brand box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">Cerrar</button>
@@ -68,9 +82,12 @@
     </div>
   </div>
 </template>
+
 <script setup>
-import { ref, watch, toRaw } from 'vue'
+import { ref, watch, toRaw, onMounted } from 'vue'
 import { STUDENTS_GRADES as studentsGrades } from '@/utils/students/grades'
+import { fetchMaterias } from '@/services/materiasService'
+
 const props = defineProps({
   visible: Boolean,
   student: Object,
@@ -79,6 +96,15 @@ const props = defineProps({
 })
 const emit = defineEmits(['close', 'save'])
 
+const materiasList = ref([])
+
+async function fetchMateriasHandler() {
+  try {
+    materiasList.value = await fetchMaterias()
+  } catch (error) {
+    console.error(error)
+  }
+}
 
 function toISODate(fecha) {
   if (!fecha) return ''
@@ -124,4 +150,13 @@ function emitSave() {
 function formatCedula(cedula) {
   return new Intl.NumberFormat('es-ES').format(cedula)
 }
+
+// cuando carge
+onMounted(async () => {
+  await fetchMateriasHandler()
+})
+
+
+console.log(materiasList.value)
+console.log(materiasList.value.length)
 </script>
