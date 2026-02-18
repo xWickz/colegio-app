@@ -21,12 +21,14 @@ const routes = [
     {
         path: '/profesores',
         name: 'Profesores',
-        component: Profesores
+        component: Profesores,
+        meta: { requiresAuth: true }
     },
     {
         path: '/materias',
         name: 'Materias',
-        component: Materias
+        component: Materias,
+        meta: { requiresAuth: true }
     },
     {
         path: '/login',

@@ -8,7 +8,7 @@ import StudentInfoModal from '@/components/students/studentInfoModal.vue'
 import { fetchEstudiantes, addEstudianteService, deleteEstudiante, fetchEstudianteMateria, updateEstudiante } from '@/services/estudiantesService'
 import { getStudentsLength } from '@/services/queryLengths'
 import { showToast } from '@/services/toast'
-import { ref, onMounted, computed, reactive } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { STUDENTS_GRADES } from '@/utils/students/grades'
 
 const addModalVisible = ref(false)
@@ -30,6 +30,7 @@ const page = ref(1)
 const limit = ref(10)
 const studentsCount = ref(0)
 const totalPages = computed(() => Math.ceil(studentsCount.value / limit.value))
+let debounceTimer = null 
 
 // Queries
 const fetchData = async () => {
@@ -106,7 +107,15 @@ const closeInfoModal = () => {
 const studentToEdit = ref(null)
 
 const openEditModal = async (estudiante) => {
-    studentToEdit.value = estudiante 
+    studentToEdit.value = estudiante
+    materias.value = []
+    loadingMaterias.value = true
+    try {
+        materias.value = await fetchEstudianteMateria(estudiante.cedula)
+    } catch (e) {
+        materias.value = []
+    }
+    loadingMaterias.value = false
 }
 
 const closeEditModal = () => {
@@ -158,6 +167,12 @@ onMounted(async () => {
     studentsCount.value = await getStudentsLength()
 })
 
+watch([search, page, limit], () => {
+    clearTimeout(debounceTimer)
+    debounceTimer = setTimeout(() => {
+        fetchData()
+    }, 500)
+})
 </script>
 
 <template>
