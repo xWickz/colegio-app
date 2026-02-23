@@ -155,8 +155,4 @@ function formatCedula(cedula) {
 onMounted(async () => {
   await fetchMateriasHandler()
 })
-
-
-console.log(materiasList.value)
-console.log(materiasList.value.length)
 </script>
