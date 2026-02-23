@@ -45,7 +45,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { visible, message, type } from '@/services/toast'
+import { visible, message, type } from '../services/toast.js'
 
 function hide() {
   visible.value = false

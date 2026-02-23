@@ -1,7 +1,7 @@
 <script setup>
 import sideNavbar from '@/components/sideNavbar.vue'
-import axios from 'axios'
 import { ref, onMounted } from 'vue'
+import apiClient from '@/services/api.js'
 
 const items = ref([])
 
@@ -9,10 +9,10 @@ const items = ref([])
 const cedula = ref([])
 const nombre = ref([])
 
-const fetchData = async() => {
+const fetchData = async () => {
   try {
-    const response = await axios.get('http://localhost:3000/api/data/profesores')
-    items.value = response.data
+    const { data } = await apiClient.get('/data/profesores')
+    items.value = data
   } catch (error) {
     console.error(error)
   }
@@ -22,7 +22,7 @@ const addProfesor = async () => {
     if (!cedula.value || !nombre.value) return alert('Llena ambos campos')
 
     try {
-        await axios.post('http://localhost:3000/api/data/profesores', {
+        await apiClient.post('/data/profesores', {
             cedula: cedula.value,
             nombre: nombre.value
         });
@@ -43,7 +43,7 @@ const addProfesor = async () => {
 
 const deleteProfesor = async (id) => {
   try {
-    await axios.delete(`http://localhost:3000/api/data/profesores/${id}`)
+    await apiClient.delete(`/data/profesores/${id}`)
     fetchData()
   } catch (error) {
     console.error(error)
@@ -66,7 +66,7 @@ onMounted(() => {
             
             <li v-for="profesor in items" :key="profesor.id">
               {{ profesor.id }}: (V-{{ new Intl.NumberFormat('es-ES').format(profesor.cedula) }}) {{ profesor.nombre }}
-              <button @click="deleteStudent(profesor.id)">Eliminar</button>
+              <button @click="deleteProfesor(profesor.id)">Eliminar</button>
             </li>
           </ul>
         </div>

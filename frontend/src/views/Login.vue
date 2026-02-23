@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue'
-import axios from 'axios'
-import { showToast } from '@/services/toast'
+import apiClient from '../services/api.js'
+import { showToast } from '../services/toast.js'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -13,7 +13,7 @@ const login = async () => {
     error.value = ''
 
     try { 
-        const response = await axios.post('http://localhost:3000/api/login', {
+      const response = await apiClient.post('/login', {
             usuario: usuario.value,
             password: password.value 
         })
