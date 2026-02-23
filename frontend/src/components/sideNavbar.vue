@@ -1,8 +1,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { getUsuarioActual } from '@/services/authService'
+import { getUsuarioActual } from '@/services/authService.js'
 import { useRouter } from 'vue-router'
-import { showToast } from '@/services/toast'
+import { showToast } from '@/services/toast.js'
 
 const usuario = ref(getUsuarioActual())
 const router = useRouter()
