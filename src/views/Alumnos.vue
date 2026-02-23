@@ -5,174 +5,68 @@ import sideNavbar from '@/components/sideNavbar.vue'
 import StudentEditModal from '@/components/students/studentEditModal.vue'
 import AddStudentModal from '@/components/students/AddStudentModal.vue'
 import StudentInfoModal from '@/components/students/studentInfoModal.vue'
-import { fetchEstudiantes, addEstudianteService, deleteEstudiante, fetchEstudianteMateria, updateEstudiante } from '@/services/estudiantesService'
-import { getStudentsLength } from '@/services/queryLengths'
-import { showToast } from '@/services/toast'
-import { ref, onMounted, computed, watch } from 'vue'
+import { useDropdown } from '@/composables/useDropdown'
+import { useStudentModals } from '@/composables/useStudentModals'
+import { useStudentsList } from '@/composables/useStudentsList'
 import { STUDENTS_GRADES } from '@/utils/students/grades'
 
-const addModalVisible = ref(false)
+const {
+    openDropdownId,
+    toggleDropdown,
+    closeDropdown,
+} = useDropdown()
 
-// Estado para dropdown de acciones
-const openDropdownId = ref(null)
+const {
+    search,
+    items,
+    page,
+    limit,
+    studentsCount,
+    totalPages,
+    fetchData,
+    handleAddStudent,
+    deleteStudent,
+    handleEditSave,
+    prevPage,
+    nextPage,
+    goToPage,
+} = useStudentsList()
 
-const toggleDropdown = (id) => {
-    openDropdownId.value = openDropdownId.value === id ? null : id
-}
+const {
+    addModalVisible,
+    selectedStudent,
+    studentToEdit,
+    studentToDelete,
+    materias,
+    loadingMaterias,
+    openAddModal,
+    closeAddModal,
+    openInfoModal,
+    closeInfoModal,
+    openEditModal,
+    closeEditModal,
+    openDeleteModal,
+    closeDeleteModal,
+    confirmDelete,
+} = useStudentModals()
 
-const closeDropdown = () => {
-    openDropdownId.value = null
-}
-
-const search = ref("")
-const items = ref([])
-const page = ref(1)
-const limit = ref(10)
-const studentsCount = ref(0)
-const totalPages = computed(() => Math.ceil(studentsCount.value / limit.value))
-let debounceTimer = null 
-
-// Queries
-const fetchData = async () => {
-    try {
-        items.value = await fetchEstudiantes(page.value, limit.value, search.value) // pagina, limites
-    } catch (error) {
-        handleError(error)
+const handleAddStudentSubmit = async (nuevoAlumno) => {
+    const success = await handleAddStudent(nuevoAlumno)
+    if (success) {
+        closeAddModal()
     }
 }
 
-const handleAddStudent = async (nuevoAlumno) => {
-    try {
-        await addEstudianteService(nuevoAlumno.cedula, nuevoAlumno.nombre, nuevoAlumno.fecha_nacimiento, nuevoAlumno.grado)
-        await fetchData()
-        studentsCount.value = await getStudentsLength()
-        showToast('Estudiante agregado correctamente!', 'success')
-        addModalVisible.value = false
-    } catch (error) {
-        handleError(error)
-    }
-}
-
-const deleteStudent = async (id) => {
-    try {
-        await deleteEstudiante(id)
-        fetchData()
-        showToast('Estudiante eliminado!', 'success', 5000)
-    } catch (error) {
-        handleError(error)
-    }
-}
-
-function handleError(error, mensaje = 'Error inesperado') {
-    console.error(error)
-    showToast(error.request?.response || mensaje, 'error', 8000)
-}
-
-// Manejar guardado de edición de estudiante
-const handleEditSave = async (alumnoEditado) => {
-    try {
-        await updateEstudiante(alumnoEditado.id, alumnoEditado.cedula, alumnoEditado.nombre, alumnoEditado.fecha_nacimiento, alumnoEditado.grado)
-        showToast('Estudiante actualizado correctamente!', 'success')
-        await fetchData()
-        studentsCount.value = await getStudentsLength()
+const handleEditStudentSave = async (alumnoEditado) => {
+    const success = await handleEditSave(alumnoEditado)
+    if (success) {
         closeEditModal()
-    } catch (error) {
-        handleError(error, 'Error al actualizar el estudiante')
     }
 }
 
-// Modal de información de estudiante
-// Explicación: Vue controla por separado cada modal, es mejor asi (por ahora)
-const selectedStudent = ref(null)
-const materias = ref([])
-const loadingMaterias = ref(false)
-
-const openInfoModal = async (estudiante) => {
-    selectedStudent.value = estudiante
-    materias.value = []
-    loadingMaterias.value = true
-    try {
-        materias.value = await fetchEstudianteMateria(estudiante.cedula)
-    } catch (e) {
-        materias.value = []
-    }
-    loadingMaterias.value = false
+const handleConfirmDelete = async () => {
+    await confirmDelete(deleteStudent)
 }
-const closeInfoModal = () => {
-    selectedStudent.value = null
-    materias.value = []
-}
-
-// Modal de editar información de estudiante
-const studentToEdit = ref(null)
-
-const openEditModal = async (estudiante) => {
-    studentToEdit.value = estudiante
-    materias.value = []
-    loadingMaterias.value = true
-    try {
-        materias.value = await fetchEstudianteMateria(estudiante.cedula)
-    } catch (e) {
-        materias.value = []
-    }
-    loadingMaterias.value = false
-}
-
-const closeEditModal = () => {
-    studentToEdit.value = null 
-}
-
-// Modal para eliminar un estudiante
-const studentToDelete = ref(null)
-
-const openDeleteModal = (estudiante) => {
-    studentToDelete.value = estudiante 
-}
-
-const closeDeleteModal = () => {
-    studentToDelete.value = null 
-}
-
-const confirmDelete = async () => {
-    if (studentToDelete.value) {
-        await deleteStudent(studentToDelete.value.id)
-        closeDeleteModal()
-    }
-}
-
-// Pagination
-const prevPage = () => {
-    if (page.value > 1) {
-        page.value--
-        fetchData()
-    }
-}
-
-const nextPage = () => {
-    if (page.value < totalPages.value) {
-        page.value++
-        fetchData()
-    }
-}
-
-const goToPage = (n) => {
-    if (n !== page.value) {
-        page.value = n
-        fetchData()
-    }
-}
-
-onMounted(async () => {
-    await fetchData()
-    studentsCount.value = await getStudentsLength()
-})
-
-watch([search, page, limit], () => {
-    clearTimeout(debounceTimer)
-    debounceTimer = setTimeout(() => {
-        fetchData()
-    }, 500)
-})
 </script>
 
 <template>
@@ -186,7 +80,7 @@ watch([search, page, limit], () => {
 
 
         <div class="mb-4 flex items-center gap-2">
-            <button @click="addModalVisible = true" type="button" class="text-white bg-brand box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">Agregar Estudiante</button>
+            <button @click="openAddModal" type="button" class="text-white bg-brand box-border border border-transparent hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none">Agregar Estudiante</button>
             <label for="limit" class="font-medium dark:text-white">Registros por página:</label>
             <select id="limit" v-model="limit" @change="fetchData" class="px-2 py-1 rounded dark:text-white">
                 <option :value="1">1</option>
@@ -197,7 +91,7 @@ watch([search, page, limit], () => {
             </select>
         </div>
 
-        <AddStudentModal :visible="addModalVisible" @close="addModalVisible = false" @add="handleAddStudent" />
+        <AddStudentModal :visible="addModalVisible" @close="closeAddModal" @add="handleAddStudentSubmit" />
 
         <div class="relative overflow-x-auto bg-neutral-primary-soft shadow-xs rounded-base border border-default">
             <div class="p-4">
@@ -299,7 +193,7 @@ watch([search, page, limit], () => {
                             :materias="materias"
                             :loadingMaterias="loadingMaterias"
                             @close="closeEditModal"
-                            @save="handleEditSave"
+                            @save="handleEditStudentSave"
                         />
                         <!-- Modal de información de estudiante controlado por Vue -->
 
@@ -308,7 +202,7 @@ watch([search, page, limit], () => {
                             :visible="!!studentToDelete"
                             :student="studentToDelete"
                             @cancel="closeDeleteModal"
-                            @confirm="confirmDelete"/>
+                            @confirm="handleConfirmDelete"/>
                         <!-- Modal de confirmación de eliminación -->
 
                     </tr>
